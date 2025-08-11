@@ -819,9 +819,16 @@
      }
    }
 
-  function startGame() {
-    ensureAudio();
-         score = 0;
+     function startGame() {
+     ensureAudio();
+     
+     // Stop defeat audio if it's playing
+     if (defeatAudioEl) {
+       defeatAudioEl.pause();
+       defeatAudioEl.currentTime = 0;
+     }
+     
+     score = 0;
      lives = 3;
      scoreEl.textContent = '0';
      selectedIndex = null;
