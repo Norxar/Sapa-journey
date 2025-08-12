@@ -145,12 +145,43 @@
     color: var(--muted);
     font-size: 16px;
   }
-  .defeat-gif {
-    max-width: min(80vw, 400px);
-    max-height: min(60vh, 300px);
-    border-radius: 12px;
-    margin-bottom: 20px;
-  }
+     .defeat-gif {
+     max-width: min(80vw, 400px);
+     max-height: min(60vh, 300px);
+     border-radius: 12px;
+     margin-bottom: 20px;
+   }
+   
+   /* Time-up overlay */
+   .time-up-overlay {
+     position: fixed;
+     inset: 0;
+     display: none;
+     place-items: center;
+     background: rgba(0,0,0,.85);
+     backdrop-filter: blur(4px);
+     z-index: 2000;
+   }
+   .time-up-overlay.show { display: grid; }
+   .time-up-content {
+     text-align: center;
+     color: var(--text);
+   }
+   .time-up-content h2 {
+     margin: 0 0 16px 0;
+     font-size: 28px;
+     color: var(--highlight);
+   }
+   .time-up-content p {
+     margin: 0 0 20px 0;
+     color: var(--muted);
+     font-size: 16px;
+   }
+   .time-up-content #finalScore {
+     color: var(--highlight);
+     font-weight: bold;
+     font-size: 18px;
+   }
   .board-wrap {
     display: none; /* shown after Start */
     background: color-mix(in oklab, var(--panel) 88%, black 12%);
@@ -233,8 +264,44 @@
     50% { transform: translateX(2px); }
     100% { transform: translateX(0); }
   }
-  .cell .icon { width: 70%; height: 70%; object-fit: contain; pointer-events: none; }
-  .legend .icon { width: 18px; height: 18px; object-fit: contain; }
+     .cell .icon { 
+     width: 70%; 
+     height: 70%; 
+     object-fit: contain; 
+     pointer-events: none;
+     border-radius: 8px;
+   }
+   .legend .icon { width: 18px; height: 18px; object-fit: contain; }
+   
+   /* Tile outlines for each symbol */
+   .cell[data-symbol="fujky"] .icon {
+     outline: 2px solid white;
+     outline-offset: -2px;
+   }
+   .cell[data-symbol="hauky"] .icon {
+     outline: 2px solid #ff6b6b;
+     outline-offset: -2px;
+   }
+   .cell[data-symbol="kaja"] .icon {
+     outline: 2px solid #4ecdc4;
+     outline-offset: -2px;
+   }
+   .cell[data-symbol="luky"] .icon {
+     outline: 2px solid #45b7d1;
+     outline-offset: -2px;
+   }
+       .cell[data-symbol="martin"] .icon {
+      outline: 2px solid #ffa726;
+      outline-offset: -2px;
+    }
+    .cell[data-symbol="lightning"] .icon {
+      outline: 2px solid #ffeb3b;
+      outline-offset: -2px;
+    }
+    .cell[data-symbol="tree"] .icon {
+      outline: 2px solid #8bc34a;
+      outline-offset: -2px;
+    }
 
   .footer {
     margin-top: 10px;
@@ -265,7 +332,8 @@
   .fx-text.small { font-size: 20px; }
   .fx-text.large { font-size: 34px; }
   .fx-text.tadaa { color: var(--highlight); }
-  .fx-text.mnam { color: #79ffa1; }
+     .fx-text.mnam { color: #79ffa1; }
+   
   @keyframes fx-pop {
     0% { opacity: 0; transform: translate(-50%, -40%) scale(.9); }
     30% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
@@ -340,15 +408,16 @@
     <div class="topbar">
       <div class="title">
         <h1>SAPA JOURNEY • 8×8</h1>
-        <div class="sub">fujky, hauky, kaja, luky, martin</div>
+                 <div class="sub">fujky, hauky, kaja, luky, martin, lightning, tree</div>
       </div>
              <div class="stats">
-         <div class="stat">Score: <span id="score">0</span></div>
-         <div class="lives" id="lives">
-           <span class="heart">♥</span>
-           <span class="heart">♥</span>
-           <span class="heart">♥</span>
-         </div>
+                   <div class="stat">Score: <span id="score">0</span></div>
+          <div class="stat">Time: <span id="timer">60</span>s</div>
+          <div class="lives" id="lives">
+            <span class="heart">♥</span>
+            <span class="heart">♥</span>
+            <span class="heart">♥</span>
+          </div>
          <button id="superpowerBtn" class="btn superpower" style="display:none;" title="Explode all fujky pieces">
            <img src="carton.png" alt="carton" />
          </button>
@@ -367,15 +436,24 @@
      </div>
    </div>
    
-   <!-- Defeat overlay -->
-   <div id="defeatOverlay" class="defeat-overlay">
-     <div class="defeat-content">
-       <h2>Game Over!</h2>
-       <img src="sadkitten.gif" alt="Sad kitten" class="defeat-gif">
-       <p>You ran out of lives!</p>
-       <button id="restartBtn" class="btn">Try Again</button>
-     </div>
-   </div>
+       <!-- Defeat overlay -->
+    <div id="defeatOverlay" class="defeat-overlay">
+      <div class="defeat-content">
+        <h2>Game Over!</h2>
+        <img src="sadkitten.gif" alt="Sad kitten" class="defeat-gif">
+        <p>You ran out of lives!</p>
+        <button id="restartBtn" class="btn">Try Again</button>
+      </div>
+    </div>
+    
+    <!-- Time-up overlay -->
+    <div id="timeUpOverlay" class="time-up-overlay">
+      <div class="time-up-content">
+        <h2>Time's Up!</h2>
+        <p>Your final score is: <span id="finalScore">0</span></p>
+        <button id="timeUpRestartBtn" class="btn">Play Again</button>
+      </div>
+    </div>
 
 <script>
 (function () {
@@ -389,6 +467,8 @@
     { key: 'kaja',   img: 'kaja.png' },
     { key: 'luky',   img: 'luky.png' },
     { key: 'martin', img: 'martin.png' },
+    { key: 'lightning', img: 'lightning.png' },
+    { key: 'tree',   img: 'tree.png' },
   ];
 
   const boardEl = document.getElementById('board');
@@ -397,15 +477,19 @@
   const resetBtn = document.getElementById('resetBtn');
   const superpowerBtn = document.getElementById('superpowerBtn');
   const livesEl = document.getElementById('lives');
-  const defeatOverlayEl = document.getElementById('defeatOverlay');
-  const restartBtn = document.getElementById('restartBtn');
-  const legendEl = document.getElementById('legend');
-  const overlayEl = document.getElementById('overlay');
-  const playBtn = document.getElementById('playBtn');
-  const fxLayerEl = document.getElementById('fxLayer');
-  const radostOverlayEl = document.getElementById('radostOverlay');
+     const defeatOverlayEl = document.getElementById('defeatOverlay');
+   const restartBtn = document.getElementById('restartBtn');
+   const timeUpOverlayEl = document.getElementById('timeUpOverlay');
+   const timeUpRestartBtn = document.getElementById('timeUpRestartBtn');
+   const finalScoreEl = document.getElementById('finalScore');
+   const timerEl = document.getElementById('timer');
+   const legendEl = document.getElementById('legend');
+   const overlayEl = document.getElementById('overlay');
+   const playBtn = document.getElementById('playBtn');
+   const fxLayerEl = document.getElementById('fxLayer');
+   const radostOverlayEl = document.getElementById('radostOverlay');
 
-  const fujkyIndex = SYMBOLS.findIndex(s => s.key === 'fujky');
+           const fujkyIndex = SYMBOLS.findIndex(s => s.key === 'fujky');
 
   // --- Audio (generated, no assets) ---
   let audioCtx = null;
@@ -468,14 +552,16 @@
   }
 
   // --- Visual effects ---
-  function spawnTextEffect(text, kind = 'tadaa') {
-    if (!fxLayerEl) return;
-    const el = document.createElement('div');
-    el.className = `fx-text ${kind} ${kind === 'tadaa' ? 'large' : 'small'}`;
-    el.textContent = text;
-    fxLayerEl.appendChild(el);
-    setTimeout(() => el.remove(), 800);
-  }
+     function spawnTextEffect(text, kind = 'tadaa') {
+     if (!fxLayerEl) return;
+     const el = document.createElement('div');
+     el.className = `fx-text ${kind} ${kind === 'tadaa' ? 'large' : 'small'}`;
+     el.textContent = text;
+     fxLayerEl.appendChild(el);
+     setTimeout(() => el.remove(), 800);
+   }
+   
+   
 
   legendEl.innerHTML = SYMBOLS
     .map(s => `<span class="pill"><img class="icon" src="${s.img}" alt="${s.key}"><span style="opacity:.8">${s.key}</span></span>`)
@@ -488,43 +574,51 @@
   let lives = 3;
   let lastMatchHadFourPlus = false;
   let hasSuperpower = false;
-  let bgAudioEl = null;
-  let radostAudioEl = null;
-  let defeatAudioEl = null;
+     let bgAudioEl = null;
+   let radostAudioEl = null;
+   let defeatAudioEl = null;
+   let gameTimer = null;
+   let timeLeft = 60;
 
   function idx(r, c) { return r * COLS + c; }
   function rowOf(i) { return Math.floor(i / COLS); }
   function colOf(i) { return i % COLS; }
 
-  function randomSymbol() {
-    return Math.floor(Math.random() * SYMBOLS.length);
-  }
+     function randomSymbol() {
+     return Math.floor(Math.random() * SYMBOLS.length);
+   }
+   
+       function canFormMatch(val1, val2) {
+      if (val1 === null || val2 === null) return false;
+      if (val1 === val2) return true;
+      return false;
+    }
 
-  function initBoardNoStartingMatches() {
-    for (let r = 0; r < ROWS; r++) {
-      for (let c = 0; c < COLS; c++) {
-        let tries = 0;
-        while (true) {
-          const candidate = randomSymbol();
-          board[idx(r, c)] = candidate;
-          if (!createsMatchAt(r, c)) break;
-          tries++;
-          if (tries > 20) break;
+           function initBoardNoStartingMatches() {
+      for (let r = 0; r < ROWS; r++) {
+        for (let c = 0; c < COLS; c++) {
+          let tries = 0;
+          while (true) {
+            const candidate = randomSymbol();
+            board[idx(r, c)] = candidate;
+            if (!createsMatchAt(r, c)) break;
+            tries++;
+            if (tries > 20) break;
+          }
         }
       }
     }
-  }
 
-  function createsMatchAt(r, c) {
-    const value = board[idx(r, c)];
-    const c1 = c - 1, c2 = c - 2;
-    if (c1 >= 0 && c2 >= 0 &&
-        board[idx(r, c1)] === value && board[idx(r, c2)] === value) return true;
-    const r1 = r - 1, r2 = r - 2;
-    if (r1 >= 0 && r2 >= 0 &&
-        board[idx(r1, c)] === value && board[idx(r2, c)] === value) return true;
-    return false;
-  }
+     function createsMatchAt(r, c) {
+     const value = board[idx(r, c)];
+     const c1 = c - 1, c2 = c - 2;
+     if (c1 >= 0 && c2 >= 0 &&
+         canFormMatch(board[idx(r, c1)], value) && canFormMatch(board[idx(r, c2)], value)) return true;
+     const r1 = r - 1, r2 = r - 2;
+     if (r1 >= 0 && r2 >= 0 &&
+         canFormMatch(board[idx(r1, c)], value) && canFormMatch(board[idx(r2, c)], value)) return true;
+     return false;
+   }
 
   function renderBoard(highlighted = new Set(), matched = new Set(), invalid = new Set()) {
     const busyClass = isBusy ? 'busy' : '';
@@ -534,18 +628,20 @@
       cell.className = `cell ${busyClass} ${highlighted.has(i) ? 'selected' : ''} ${matched.has(i) ? 'matched' : ''} ${invalid.has(i) ? 'invalid' : ''}`;
       cell.type = 'button';
       cell.disabled = isBusy;
-      const v = board[i];
-      if (v == null) {
-        cell.textContent = '';
-      } else {
-        const img = document.createElement('img');
-        img.className = 'icon';
-        img.src = SYMBOLS[v].img;
-        img.alt = SYMBOLS[v].key;
-        cell.appendChild(img);
-      }
-      cell.dataset.index = i;
-      cell.setAttribute('aria-label', v == null ? 'empty' : SYMBOLS[v].key);
+             const v = board[i];
+       if (v == null) {
+         cell.textContent = '';
+       } else {
+         const img = document.createElement('img');
+         img.className = 'icon';
+         img.src = SYMBOLS[v].img;
+         img.alt = SYMBOLS[v].key;
+         cell.appendChild(img);
+         // Add data-symbol attribute for CSS targeting
+         cell.setAttribute('data-symbol', SYMBOLS[v].key);
+       }
+       cell.dataset.index = i;
+       cell.setAttribute('aria-label', v == null ? 'empty' : SYMBOLS[v].key);
       cell.addEventListener('click', onCellClick);
       boardEl.appendChild(cell);
     }
@@ -585,59 +681,71 @@
     board[b] = t;
   }
 
-  function findAllMatches() {
-    const matched = new Set();
-    lastMatchHadFourPlus = false;
+     function findAllMatches() {
+     const matched = new Set();
+     lastMatchHadFourPlus = false;
 
-    for (let r = 0; r < ROWS; r++) {
-      let runStart = 0;
-      for (let c = 1; c <= COLS; c++) {
-        const prev = c - 1;
-        const currVal = c < COLS ? board[idx(r, c)] : null;
-        const prevVal = board[idx(r, prev)];
-        if (c < COLS && currVal === prevVal && currVal != null) {
-          continue;
-        } else {
-          const runEnd = prev;
-          const runLen = runEnd - runStart + 1;
-          if (prevVal != null && runLen >= 3) {
-            for (let cc = runStart; cc <= runEnd; cc++) {
-              matched.add(idx(r, cc));
-            }
-            if (runLen >= 4) lastMatchHadFourPlus = true;
-          }
-          runStart = c;
-        }
-      }
+     // Check horizontal matches
+     for (let r = 0; r < ROWS; r++) {
+       let runStart = 0;
+       for (let c = 1; c <= COLS; c++) {
+         const prev = c - 1;
+         const currVal = c < COLS ? board[idx(r, c)] : null;
+         const prevVal = board[idx(r, prev)];
+         
+         // Check if current and previous values can form a match (including stars)
+         if (c < COLS && canFormMatch(currVal, prevVal)) {
+           continue;
+         } else {
+           const runEnd = prev;
+           const runLen = runEnd - runStart + 1;
+           if (prevVal != null && runLen >= 3) {
+             for (let cc = runStart; cc <= runEnd; cc++) {
+               matched.add(idx(r, cc));
+             }
+             if (runLen >= 4) lastMatchHadFourPlus = true;
+           }
+           runStart = c;
+         }
+       }
+     }
+
+     // Check vertical matches
+     for (let c = 0; c < COLS; c++) {
+       let runStart = 0;
+       for (let r = 1; r <= ROWS; r++) {
+         const prev = r - 1;
+         const currVal = r < ROWS ? board[idx(r, c)] : null;
+         const prevVal = board[idx(prev, c)];
+         
+         // Check if current and previous values can form a match (including stars)
+         if (r < ROWS && canFormMatch(currVal, prevVal)) {
+           continue;
+         } else {
+           const runEnd = prev;
+           const runLen = runEnd - runStart + 1;
+           if (prevVal != null && runLen >= 3) {
+             for (let rr = runStart; rr <= runEnd; rr++) {
+               matched.add(idx(rr, c));
+             }
+             if (runLen >= 4) lastMatchHadFourPlus = true;
+           }
+           runStart = r;
+         }
+       }
+     }
+     return matched;
+   }
+
+           function clearMatches(matched) {
+      matched.forEach(i => {
+        board[i] = null;
+      });
     }
+   
 
-    for (let c = 0; c < COLS; c++) {
-      let runStart = 0;
-      for (let r = 1; r <= ROWS; r++) {
-        const prev = r - 1;
-        const currVal = r < ROWS ? board[idx(r, c)] : null;
-        const prevVal = board[idx(prev, c)];
-        if (r < ROWS && currVal === prevVal && currVal != null) {
-          continue;
-        } else {
-          const runEnd = prev;
-          const runLen = runEnd - runStart + 1;
-          if (prevVal != null && runLen >= 3) {
-            for (let rr = runStart; rr <= runEnd; rr++) {
-              matched.add(idx(rr, c));
-            }
-            if (runLen >= 4) lastMatchHadFourPlus = true;
-          }
-          runStart = r;
-        }
-      }
-    }
-    return matched;
-  }
-
-  function clearMatches(matched) {
-    matched.forEach(i => board[i] = null);
-  }
+   
+   
 
   function applyGravityAndRefill() {
     for (let c = 0; c < COLS; c++) {
@@ -650,9 +758,9 @@
           writeRow--;
         }
       }
-      for (let r = writeRow; r >= 0; r--) {
-        board[idx(r, c)] = randomSymbol();
-      }
+                    for (let r = writeRow; r >= 0; r--) {
+          board[idx(r, c)] = randomSymbol();
+        }
     }
   }
 
@@ -691,10 +799,11 @@
            superpowerBtn.style.display = 'inline-block';
          }
        }
-      renderBoard(new Set(), matches);
-      await wait(180);
-      clearMatches(matches);
-      score += matches.size * 10;
+             renderBoard(new Set(), matches);
+       await wait(180);
+       
+               clearMatches(matches);
+        score += matches.size * 10;
       scoreEl.textContent = String(score);
       renderBoard();
       await wait(40);
@@ -735,6 +844,52 @@
      return new Promise(res => setTimeout(res, ms));
    }
    
+   function startTimer() {
+     timeLeft = 60;
+     updateTimerDisplay();
+     
+     gameTimer = setInterval(() => {
+       timeLeft--;
+       updateTimerDisplay();
+       
+       if (timeLeft <= 0) {
+         clearInterval(gameTimer);
+         showTimeUpScreen();
+       }
+     }, 1000);
+   }
+   
+   function updateTimerDisplay() {
+     if (timerEl) {
+       timerEl.textContent = timeLeft;
+     }
+   }
+   
+   function stopTimer() {
+     if (gameTimer) {
+       clearInterval(gameTimer);
+       gameTimer = null;
+     }
+   }
+   
+   function showTimeUpScreen() {
+     // Stop background music
+     if (bgAudioEl) {
+       bgAudioEl.pause();
+       bgAudioEl.currentTime = 0;
+     }
+     
+     // Update final score
+     if (finalScoreEl) {
+       finalScoreEl.textContent = score;
+     }
+     
+     // Show time-up overlay
+     if (timeUpOverlayEl) {
+       timeUpOverlayEl.classList.add('show');
+     }
+   }
+   
    function loseLife() {
      lives--;
      updateLivesDisplay();
@@ -765,6 +920,9 @@
        bgAudioEl.pause();
        bgAudioEl.currentTime = 0;
      }
+     
+     // Stop the timer
+     stopTimer();
      
      // Play defeat audio
      try {
@@ -840,8 +998,12 @@
      if (superpowerBtn) superpowerBtn.style.display = 'none';
      if (overlayEl) overlayEl.classList.add('hidden');
      if (defeatOverlayEl) defeatOverlayEl.classList.remove('show');
+     if (timeUpOverlayEl) timeUpOverlayEl.classList.remove('show');
      updateLivesDisplay();
      renderBoard();
+     
+     // Start the game timer
+     startTimer();
     // Start/ensure background music
     try {
       if (!bgAudioEl) {
@@ -882,9 +1044,10 @@
       startGame();
     }
   });
-     resetBtn.addEventListener('click', startGame);
-   superpowerBtn.addEventListener('click', explodeAllFujky);
-   restartBtn.addEventListener('click', startGame);
+           resetBtn.addEventListener('click', startGame);
+    superpowerBtn.addEventListener('click', explodeAllFujky);
+    restartBtn.addEventListener('click', startGame);
+    timeUpRestartBtn.addEventListener('click', startGame);
 })();
 </script>
 </body>
